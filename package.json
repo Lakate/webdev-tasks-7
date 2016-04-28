@@ -1,0 +1,30 @@
+{
+  "name": "webdev-tasks-7",
+  "version": "1.0.0",
+  "description": "'hrunogochi'",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "start:dev": "node app.js --NODE_ENV=development"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lakate/webdev-tasks-7.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Lakate/webdev-tasks-7/issues"
+  },
+  "homepage": "https://github.com/Lakate/webdev-tasks-7#readme",
+  "dependencies": {
+    "cookie-parser": "1.4.1",
+    "express": "4.13.4",
+    "hbs": "4.0.0",
+    "minimist": "1.2.0",
+    "morgan": "1.7.0"
+  },
+  "devDependencies": {
+    "webpack": "1.13.0"
+  }
+}
