@@ -3,14 +3,12 @@
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
-const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const argv = require('minimist')(process.argv.slice(2));
 
 app.set('view engine', 'hbs');
 app.use(express.static(__dirname + '/public'));
 
-app.use(bodyParser.json());
 app.use(morgan('dev'));
 
 require('./routes')(app);
