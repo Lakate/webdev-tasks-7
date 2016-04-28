@@ -1,0 +1,58 @@
+html,
+body
+{
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.buttons
+{
+    position: absolute;
+    z-index: 2;
+    top: 100px;
+    left: 100px;
+    width: 270px;
+}
+
+.buttons div
+{
+    padding: 10px;
+    font-size: 30px;
+    border-radius: 5px;
+}
+
+.state
+{
+    border-radius: 10px;
+    border: 1px solid #1e88e5;
+    padding: 5px;
+}
+
+.buttons .satiety
+{
+    border: 1px solid #00bcb8;
+    color: #00bcb8;
+}
+
+.buttons .mood
+{
+    border: 1px solid #fa9632;
+    color: #fa9632;
+    margin-bottom: 10px;
+}
+
+.buttons .energy
+{
+    border: 1px solid #ffd700;
+    color: #ffd700;
+    margin-bottom: 10px;
+}
+
+.buttons .begin-again
+{
+    margin-top: 30px;
+    border: 1px solid #ff4444;
+    color: #ff4444
+}
