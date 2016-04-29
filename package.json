@@ -24,9 +24,7 @@
     "minimist": "1.2.0",
     "morgan": "1.7.0"
   },
-  "devDependencies": {
-    "webpack": "1.13.0"
-  },
+  "devDependencies": {},
   "engines": {
     "node": "4.4.0"
   }

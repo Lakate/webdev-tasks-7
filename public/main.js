@@ -1,47 +1,5 @@
 'use script';
 
-const hrundel = Snap("#hrundel");
-
-function animateInterval(obj, stateStart, stateEnd, delay, interval) {
-    setInterval(function () {
-        obj.animate(
-            stateStart,
-            delay,
-            function () {
-                obj.animate(
-                    stateEnd,
-                    delay
-                )
-            }
-        )
-    }, interval)
-}
-
-function animate(obj, stateStart, delay) {
-    obj.animate(
-        stateStart,
-        delay
-    )
-}
-
-/**
-*  Движение хвостиком
-* */
-function moveTail() {
-    const tail = Snap.select("#tail");
-    const interval = 800;
-    const delay = 300;
-    animateInterval(
-        tail,
-        { d: "M660,400 C680,405 675,405 670,408 C665,400 670,400 685,400" },
-        { d: "M660,400 C680,395 675,395 670,400 C665,390 670,390 685,385" },
-        delay,
-        interval
-    );
-}
-
-moveTail();
-
 /**
  *  Работа с сохранением, восстановлением и изменением состояния
  */
@@ -160,11 +118,11 @@ if ('hidden' in document) {
     visibilityState  = 'visibilityState';
     visibilityChange = 'visibilitychange';
 } else if ('mozHidden' in document) {
-    hidden           = 'mozHidden';
+    hidden = 'mozHidden';
     visibilityState  = 'mozVisibilityState';
     visibilityChange = 'mozvisibilitychange';
 } else if ('webkitHidden' in document) {
-    hidden           = 'webkitHidden';
+    hidden = 'webkitHidden';
     visibilityState  = 'webkitVisibilityState';
     visibilityChange = 'webkitvisibilitychange';
 }
@@ -192,11 +150,119 @@ function awakeHandler() {
 }
 
 /**
- * Обрботка настроения
+ * Распознование речи
  */
-const mouth = Snap.select("#mouth");
+const speechLog = document.querySelector('.speech-log');
 
-function changeMood() {
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const recognizer = new SpeechRecognition();
+
+recognizer.lang = 'en-US';
+recognizer.continuous = true;
+
+speechLog.onclick = function () {
+    speechLog.innerHTML = 'Let\'s go!';
+    recognizer.start();
+};
+
+recognizer.onresult = function (e) {
+    const index = e.resultIndex;
+    const result = e.results[index][0].transcript.trim();
+
+    if (result.toLowerCase() === 'stop' || mood === 100) {
+        speechLog.innerHTML = '<br>Click to start talking with me!';
+        isMoodUp = false;
+        recognizer.stop();
+    } else {
+        speechLog.innerHTML = result;
+        isMoodUp = true;
+    }
+};
+
+
+/************************************************************
+ * Анимации
+ ***********************************************************/
+const hrundel = Snap("#hrundel");
+
+/**
+ *  Движение хвостиком
+ * */
+function moveTail() {
+    const tail = Snap.select("#tail");
+    const interval = 800;
+    const delay = 300;
+    animateInterval(
+        tail,
+        { d: "M660,400 C680,405 675,405 670,408 C665,400 670,400 685,400" },
+        { d: "M660,400 C680,395 675,395 670,400 C665,390 670,390 685,385" },
+        delay,
+        interval
+    );
+}
+
+moveTail();
+
+/**
+ *  Слезы
+ */
+function moveTears () {
+    const tearOne = Snap.select("#tear-1");
+    const tearTwo = Snap.select("#tear-2");
+
+    const statesForTearOne = [{
+        d: "M565,385 C558,394 558,402 563,403 C566,404 566,404 567,403 C572,402 572,395 565,385",
+        opacity: 1
+    }, {
+        d: "M565,425 C558,434 558,442 563,443 C566,444 566,444 567,443 C572,442 572,435 565,425",
+        opacity: 0
+    }, {
+        d: "M565,385 C558,394 558,402 563,403 C566,404 566,404 567,403 C572,402 572,395 565,385",
+        opacity: 0
+    }];
+    const statesForTearTwo = [{
+        d: "M510,385 C503,394 503,402 508,403 C511,404 511,404 512,403 C517,402 517,395 510,385",
+        opacity: 1
+    }, {
+        d: "M510,425 C503,434 503,442 508,443 C511,444 511,444 512,443 C517,442 517,435 510,425",
+        opacity: 0
+    }, {
+        d: "M510,385 C503,394 503,402 508,403 C511,404 511,404 512,403 C517,402 517,395 510,385",
+        opacity: 0
+    }];
+
+    animateManyStates(tearOne, statesForTearOne, 0);
+    animateManyStates(tearTwo, statesForTearTwo, 0);
+}
+
+//moveTears();
+
+function moveSleepingZZZ () {
+    const sleepingZ = Snap.select("#z");
+    const sleepingZZ = Snap.select("#zz");
+    const sleepingZZZ = Snap.select("#zzz");
+
+    const statesForSlepingZ = [{
+        "transform" : "t0 0",
+        opacity: 1
+    }, {
+        "transform" : "t-10 -30",
+        opacity: 0
+    }, {
+        "transform" : "t0 0",
+        opacity: 0
+    }];
+
+    animateManyStates(sleepingZ, statesForSlepingZ, 0);
+    animateManyStates(sleepingZZ, statesForSlepingZ, 0);
+    animateManyStates(sleepingZZZ, statesForSlepingZ, 0);
+}
+
+//moveSleepingZZZ();
+
+function changeMood () {
+    const mouth = Snap.select("#mouth");
+
     if (mood < 50) {
         animate(
             mouth,
@@ -220,4 +286,32 @@ function changeMood() {
             300
         );
     }
+}
+
+function animateInterval(obj, stateStart, stateEnd, delay, interval) {
+    setInterval(function () {
+        obj.animate(
+            stateStart,
+            delay,
+            function () {
+                obj.animate(
+                    stateEnd,
+                    delay
+                )
+            }
+        )
+    }, interval)
+}
+
+function animate (obj, stateStart, delay) {
+    obj.animate(
+        stateStart,
+        delay
+    )
+}
+
+function animateManyStates(el, states, i) {
+    el.animate(states[i], 1500, function() {
+        animateManyStates(el, states, ++i in states ? i : 0);
+    })
 }
