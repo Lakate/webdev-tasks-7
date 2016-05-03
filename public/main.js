@@ -1,72 +1,161 @@
-'use script';
+const INITIAL_STATE = {
+    energy: 100,
+    mood: 100,
+    satiety: 100
+};
+
+const STATUS_BOARD = {
+    satiety: document.querySelector('.satiety-value'),
+    mood: document.querySelector('.mood-value'),
+    energy: document.querySelector('.energy-value')
+};
+
+'use strict';
+
+function Hrundel (state) {
+    this.state = state || Object.assign({}, INITIAL_STATE);
+    this.action = 'nothing';
+}
+
+Hrundel.prototype.changeAction = function (newAction) {
+    if (newAction !== 'nothing' && newAction !== 'satiety' && newAction !== 'mood' && newAction !== 'energy') {
+        return;
+    }
+    if (this.action === 'nothing' || newAction === 'nothing') {
+        this.action = newAction;
+    }
+};
+
+Hrundel.prototype.changeParam = function () {
+    Object.keys(this.state).forEach((function (key) {
+        if (this.action === 'nothing') {
+            this.state[key] = Math.max(0, this.state[key] - 1);
+        } else if (key === this.action) {
+            this.state[key] = Math.min(100, this.state[key] + 3);
+        }
+        setState(this.state);
+    }).bind(this));
+
+    if (this.action === 'nothing' || this.action === 'mood') {
+        changeMood(this.state.mood);
+    }
+};
+
+Hrundel.prototype.startCounter = function () {
+    if (this.counterId) {
+        return;
+    }
+
+    this.counterId = setInterval(this.changeParam.bind(this), 1000);
+};
+
+Hrundel.prototype.printState = function (statusBoard) {
+    let zeroCounter = 0;
+
+    Object.keys(this.state).forEach((function (key) {
+        statusBoard[key].innerHTML = this.state[key];
+        zeroCounter = this.state[key] === 0 ? zeroCounter + 1 : zeroCounter;
+    }).bind(this));
+
+    if (zeroCounter > 1) {
+        tears.style.opacity = 1;
+        dieLog.style.display = "block";
+        speechLog.style.display = "none";
+        this.die();
+    }
+};
+
+Hrundel.prototype.startPrinter = function (statusBoard) {
+    if (this.printerId) {
+        return;
+    }
+
+    this.printerId = setInterval(this.printState.bind(this, statusBoard), 1000);
+};
+
+Hrundel.prototype.die = function () {
+    clearInterval(hrun.counterId);
+    clearInterval(hrun.printerId);
+};
+/**
+ *  Работа восстановлением состояния
+ */
+function getStateFromCookie() {
+    const satiety = Cookies.get('satiety');
+    const energy = Cookies.get('energy');
+    const mood = Cookies.get('mood');
+
+    if (satiety && energy && mood) {
+        return {
+            satiety,
+            energy,
+            mood
+        }
+    }
+}
 
 /**
- *  Работа с сохранением, восстановлением и изменением состояния
+ *  Работа с сохранением и изменением состояния
  */
-let satiety = Cookies.get('satiety');
-let energy = Cookies.get('energy');
-let mood = Cookies.get('mood');
-let isSatietyUp = false;
-let isMoodUp = false;
-let isEnergyUp = false;
-let moodValueNode = document.querySelector('.mood-value');
-let satietyValueNode = document.querySelector('.satiety-value');
-let energyValueNode = document.querySelector('.energy-value');
-
-function setState(param, value) {
-    Cookies.set(param, value, { expires: 7});
-
-    return Cookies.get(param);
+function setState(state) {
+    Object.keys(state).forEach((function (key) {
+        Cookies.set(key, state[key], { expires: 7});
+    }));
 }
 
-if (!satiety) {
-    satiety = setState('satiety', 100);
-    satietyValueNode.innerHTML = satiety;
-}
-if (!energy) {
-    energy = setState('energy', 100);
-    energyValueNode.innerHTML = energy;
-}
-if (!mood) {
-    mood = setState('mood', 100);
-    moodValueNode.innerHTML = mood;
-}
+/**
+ *  Создание новой игры, начальные состояния всего
+ */
+let hrun;
+let dieLog = document.querySelector('.die-log');
+const tears = document.querySelector('#tears');
 
-function changeParam(param, paramUp, value) {
-    if (!paramUp) {
-        value = Math.max(+value - 1, 0);
+function newGame(state) {
+    if (state) {
+        hrun = new Hrundel(state);
     } else {
-        value = Math.min(+value + 3, 100);
+        hrun = new Hrundel();
     }
-    return setState(param, value)
+
+    hrun.startCounter();
+    hrun.startPrinter(STATUS_BOARD);
+
+    moveTail();
+    tears.style.opacity = 0;
+    dieLog.style.display = "none";
+    speechLog.style.display = "block";
 }
 
-function turnOnCounter() {
-    setInterval(() => {
-        if (isEnergyUp || isSatietyUp) {
-            return;
-        }
-        mood = changeParam('mood', isMoodUp, mood);
-        changeMood();
-        moodValueNode.innerHTML = mood;
-    }, 1000);
-    setInterval(() => {
-        if (isSatietyUp) {
-            return;
-        }
-        energy = changeParam('energy', isEnergyUp, energy);
-        energyValueNode.innerHTML = energy;
-    }, 1000);
-    setInterval(() => {
-        if (isEnergyUp) {
-            return;
-        }
-        satiety = changeParam('satiety', isSatietyUp, satiety);
-        satietyValueNode.innerHTML = satiety;
-    }, 1000);
-}
+/**
+ * Обработка кнопки возможности начать игру заново
+ */
+const buttonNewGame = document.querySelector('.begin-again');
 
-turnOnCounter();
+buttonNewGame.addEventListener('click', () => {
+    setState(INITIAL_STATE);
+
+    hrun.die();
+    newGame();
+});
+
+/**
+ * Обработка кнопки возможности покормить хрюнделя
+ */
+const buttonGiveFood = document.querySelector('.give-food');
+let eatId;
+
+buttonGiveFood.addEventListener('click', () => {
+    eatId = haveDinner();
+    hrun.changeAction('satiety');
+
+    let dinnerId = setInterval(function () {
+        if (hrun.state.satiety === 100) {
+            hrun.changeAction('nothing');
+            stopEating(eatId);
+            clearInterval(dinnerId);
+        }
+    }, 1000);
+});
 
 /**
  * Питание хрюнделя
@@ -82,24 +171,15 @@ if (navigator.getBattery) {
     }
 
     function updateCharging() {
-        isSatietyUp = this.charging ? true : false;
+        if (this.charging) {
+            hrun.changeAction('satiety');
+            eatId = haveDinner();
+        } else {
+            hrun.changeAction('nothing');
+            stopEating(eatId);
+        }
     }
 }
-
-/**
- * Обработка возможности начать игру заново
- */
-const buttonNewGame = document.querySelector('.begin-again');
-buttonNewGame.addEventListener('click', () => {
-    satiety = setState('satiety', 100);
-    satietyValueNode.innerHTML = satiety;
-
-    energy = setState('energy', 100);
-    energyValueNode.innerHTML = energy;
-
-    mood = setState('mood', 100);
-    moodValueNode.innerHTML = mood;
-});
 
 /**
  * Работа с разными вкладками
@@ -109,6 +189,7 @@ buttonNewGame.addEventListener('click', () => {
  * пробуждения должен сопровождаться анимацией.
  * Во время сна восстанавливается энергия.
  */
+
 let hidden = null;
 let visibilityState  = null;
 let visibilityChange = null;
@@ -141,12 +222,16 @@ document.addEventListener(visibilityChange, function () {
     }
 });
 
+const sleep = document.querySelector("#sleep");
+
 function sleepingHandler() {
-    isEnergyUp = true;
+    hrun.changeAction('energy');
+    sleep.style.opacity = 1;
 }
 
 function awakeHandler() {
-    isEnergyUp = false;
+    hrun.changeAction('nothing');
+    sleep.style.opacity = 0;
 }
 
 /**
@@ -160,29 +245,40 @@ const recognizer = new SpeechRecognition();
 recognizer.lang = 'en-US';
 recognizer.continuous = true;
 
+function stopTalkingHandler () {
+    recognizer.stop();
+    hrun.changeAction('nothing');
+    speechLog.innerHTML = '<br>Click to start talking with me!';
+}
+
 speechLog.onclick = function () {
     speechLog.innerHTML = 'Let\'s go!';
+    hrun.changeAction('mood');
     recognizer.start();
+
+    let conversationId = setInterval(function () {
+        if (hrun.state.mood === 100) {
+            stopTalkingHandler();
+            clearInterval(conversationId);
+        }
+    }, 1000);
 };
 
 recognizer.onresult = function (e) {
     const index = e.resultIndex;
     const result = e.results[index][0].transcript.trim();
 
-    if (result.toLowerCase() === 'stop' || mood === 100) {
-        speechLog.innerHTML = '<br>Click to start talking with me!';
-        isMoodUp = false;
-        recognizer.stop();
+    if (result.toLowerCase() === 'stop') {
+        stopTalkingHandler();
     } else {
         speechLog.innerHTML = result;
-        isMoodUp = true;
+        hrun.changeAction('mood');
     }
 };
 
+newGame(getStateFromCookie());
 
-/************************************************************
- * Анимации
- ***********************************************************/
+
 const hrundel = Snap("#hrundel");
 
 /**
@@ -190,18 +286,80 @@ const hrundel = Snap("#hrundel");
  * */
 function moveTail() {
     const tail = Snap.select("#tail");
-    const interval = 800;
-    const delay = 300;
-    animateInterval(
-        tail,
-        { d: "M660,400 C680,405 675,405 670,408 C665,400 670,400 685,400" },
-        { d: "M660,400 C680,395 675,395 670,400 C665,390 670,390 685,385" },
-        delay,
-        interval
-    );
+
+    setInterval(function () {
+        tail.animate(
+            { d: "M660,400 C680,405 675,405 670,408 C665,400 670,400 685,400" },
+            300,
+            function () {
+                tail.animate(
+                    { d: "M660,400 C680,395 675,395 670,400 C665,390 670,390 685,385" },
+                    300
+                )
+            }
+        )
+    }, 800)
 }
 
-moveTail();
+/**
+ * Питание хрнделя
+ */
+const mouth = Snap.select("#mouth");
+const coctail = document.querySelector('.eat');
+
+function haveDinner() {
+
+    coctail.style.opacity = 1;
+
+    return setInterval(function () {
+        mouth.animate(
+            { d: "M523,406 C540,420 548,420 552,406" },
+            300,
+            function () {
+                mouth.animate(
+                    { d: "M540,416 543,416" },
+                    300
+                )
+            }
+        )
+    }, 800)
+
+}
+
+function stopEating(eatId) {
+    clearInterval(eatId);
+    coctail.style.opacity = 0;
+}
+
+/**
+ * Изменение настроения
+ */
+function changeMood (mood) {
+
+    if (mood < 50) {
+        animate(
+            mouth,
+            { d: "M523,410 L552,410" },
+            300
+        );
+    }
+
+    if (mood < 20) {
+        animate(
+            mouth,
+            { d: "M523,416 C540,406 548,406 552,416" },
+            300
+        );
+    }
+
+    if (mood >= 50) {
+        animate(
+            mouth,
+            { d: "M523,406 C540,420 548,420 552,406" },
+            300
+        );
+    }
+}
 
 /**
  *  Слезы
@@ -235,7 +393,7 @@ function moveTears () {
     animateManyStates(tearTwo, statesForTearTwo, 0);
 }
 
-//moveTears();
+moveTears();
 
 function moveSleepingZZZ () {
     const sleepingZ = Snap.select("#z");
@@ -258,50 +416,7 @@ function moveSleepingZZZ () {
     animateManyStates(sleepingZZZ, statesForSlepingZ, 0);
 }
 
-//moveSleepingZZZ();
-
-function changeMood () {
-    const mouth = Snap.select("#mouth");
-
-    if (mood < 50) {
-        animate(
-            mouth,
-            { d: "M523,410 L552,410" },
-            300
-        );
-    }
-
-    if (mood < 20) {
-        animate(
-            mouth,
-            { d: "M523,416 C540,406 548,406 552,416" },
-            300
-        );
-    }
-
-    if (mood >= 50) {
-        animate(
-            mouth,
-            { d: "M523,406 C540,420 548,420 552,406" },
-            300
-        );
-    }
-}
-
-function animateInterval(obj, stateStart, stateEnd, delay, interval) {
-    setInterval(function () {
-        obj.animate(
-            stateStart,
-            delay,
-            function () {
-                obj.animate(
-                    stateEnd,
-                    delay
-                )
-            }
-        )
-    }, interval)
-}
+moveSleepingZZZ();
 
 function animate (obj, stateStart, delay) {
     obj.animate(

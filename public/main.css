@@ -13,7 +13,7 @@ body
     z-index: 2;
     top: 100px;
     left: 100px;
-    width: 280px;
+    width: 320px;
 }
 
 .buttons div
@@ -23,7 +23,8 @@ body
     border-radius: 5px;
 }
 
-.state
+.state,
+.navigate
 {
     border-radius: 10px;
     border: 1px solid #1e88e5;
@@ -50,16 +51,28 @@ body
     margin-bottom: 10px;
 }
 
-.buttons .begin-again
+.navigate
 {
     margin-top: 30px;
+}
+
+.navigate .begin-again
+{
     border: 1px solid #ff4444;
-    color: #ff4444
+    color: #ff4444;
+    margin-bottom: 10px;
+}
+
+.navigate .give-food
+{
+    border: 1px solid #00bcb8;
+    color: #00bcb8;
 }
 
 #tear-1,
 #tear-2,
-#sleep
+#sleep,
+#tears
 {
     opacity: 0;
 }
@@ -67,18 +80,25 @@ body
 .eat
 {
     position: absolute;
-    top: 200px;
-    left: 270px;
+    top: 405px;
+    left: 530px;
     width: 80px;
     height: 80px;
     opacity: 0;
 }
 
-.speech-log
+.speech-log,
+.die-log
 {
     position: absolute;
     top: 100px;
     left: 500px;
     font-size: 30px;
     color: #ff4040;
+    display: block;
+}
+
+.die-log
+{
+    display: none;
 }
